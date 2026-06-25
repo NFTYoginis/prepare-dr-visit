@@ -8,12 +8,20 @@
 <meta property="og:title" content="Visit Ready — walk into your appointment ready" />
 <meta property="og:description" content="A folder-based specialist that prepares you for a doctor's visit and refuses to play doctor. Open source." />
 <meta property="og:type" content="website" />
+<meta property="og:url" content="https://nftyoginis.github.io/prepare-dr-visit/" />
+<meta property="og:image" content="https://nftyoginis.github.io/prepare-dr-visit/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://nftyoginis.github.io/prepare-dr-visit/og.png" />
 <style>
   :root{
-    --paper:#FBFAF7; --panel:#FFFFFF; --ink:#1C2A2E; --muted:#5B6B6E;
-    --primary:#0F6E68; --primary-700:#0B544F; --primary-soft:#E4F0EE;
-    --accent:#E07A4E; --line:#E7E2D9; --danger:#C2452D; --ok:#1E8A5B;
-    --shadow:0 18px 50px -22px rgba(20,42,46,.30);
+    --paper:#FFFFFF; --panel:#FFFFFF; --tint:#F1F6F5; --ink:#13242A; --muted:#566569;
+    --primary:#0E807A; --primary-700:#0A5F58; --primary-soft:#E1F0EE;
+    --accent:#EF7B4E; --line:#E3E9E9; --danger:#C2452D; --ok:#1E8A5B;
+    --teal:#1CC4B4;
+    --dark:#0B1618; --dark-2:#0F1E1C; --dark-line:rgba(255,255,255,.12);
+    --on-dark:#EAF3F1; --muted-d:#9CB6B1;
+    --shadow:0 22px 60px -24px rgba(6,18,20,.55);
+    --card-shadow:0 1px 2px rgba(16,40,40,.05),0 14px 34px -22px rgba(16,40,40,.22);
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --mono:"SF Mono",ui-monospace,Menlo,Consolas,"Liberation Mono",monospace;
@@ -38,19 +46,31 @@
   .btn-ghost:hover{border-color:var(--primary);color:var(--primary-700)}
 
   /* nav */
-  nav{position:sticky;top:0;z-index:50;background:rgba(251,250,247,.86);
-    backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
+  nav{position:sticky;top:0;z-index:50;background:rgba(11,22,24,.82);
+    backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--dark-line)}
   nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em;
-    font-size:1.06rem;text-decoration:none;color:var(--ink)}
-  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--primary);
+    font-size:1.06rem;text-decoration:none;color:#fff}
+  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--teal);
     display:inline-flex;align-items:center;justify-content:center}
-  .brand .dot::after{content:"";width:9px;height:9px;border:2px solid #fff;border-radius:50%;
+  .brand .dot::after{content:"";width:9px;height:9px;border:2px solid #06231F;border-radius:50%;
     border-right-color:transparent;transform:rotate(-30deg)}
   nav .btn{padding:9px 16px;font-size:.9rem}
+  nav .btn-primary{background:var(--teal);color:#06231F}
 
   /* hero */
-  header{padding:74px 0 18px}
+  header{padding:80px 0 70px;color:var(--on-dark);
+    background:radial-gradient(115% 135% at 82% -12%, #18342F 0%, var(--dark) 56%)}
+  header h1{color:#fff}
+  header .lede{color:var(--muted-d)}
+  header .lede b{color:#fff}
+  header .eyebrow{color:var(--teal)}
+  header .microtrust{color:var(--muted-d)}
+  header .microtrust .tick{color:var(--teal)}
+  header .btn-primary{background:var(--teal);color:#06231F}
+  header .btn-primary:hover{box-shadow:0 12px 30px -8px rgba(28,196,180,.55)}
+  header .btn-ghost{color:#EAF3F1;border-color:rgba(255,255,255,.26)}
+  header .btn-ghost:hover{border-color:var(--teal);color:#fff}
   .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
   h1{font-size:clamp(2.1rem,4.6vw,3.4rem)}
   .lede{font-size:1.16rem;color:var(--muted);margin:20px 0 28px;max-width:38ch}
@@ -70,7 +90,7 @@
   .device-bar i:nth-child(3){background:#A7CD9E}
   .device-bar .ttl{margin-left:8px;font-size:.78rem;color:var(--muted);font-weight:600}
   .screen{padding:18px;height:464px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;
-    background:linear-gradient(180deg,#FCFBF8,#F7F5F0)}
+    background:linear-gradient(180deg,#FAFCFB,#F1F6F5)}
   .bubble{max-width:88%;padding:11px 14px;border-radius:14px;font-size:.92rem;opacity:0;
     transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}
   .bubble.show{opacity:1;transform:none}
@@ -111,7 +131,7 @@
   .segs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--line);background:#fff}
   .seg{flex:1;font:600 .76rem var(--sans);padding:7px 6px;border:none;background:transparent;
     color:var(--muted);border-radius:8px;cursor:pointer;transition:.15s}
-  .seg:hover{color:var(--ink);background:#F5F2EB}
+  .seg:hover{color:var(--ink);background:#ECF3F2}
   .seg.on{background:var(--primary-soft);color:var(--primary-700)}
   .demo-cap{padding:11px 15px;border-top:1px solid var(--line);background:#fff;font-size:.82rem;
     color:var(--muted);min-height:44px;display:flex;align-items:center;line-height:1.4}
@@ -138,21 +158,21 @@
   h2{font-size:clamp(1.6rem,3.2vw,2.3rem)}
   .sec-head p{color:var(--muted);font-size:1.08rem;margin:14px 0 0}
 
-  .band{background:#11201E;color:#EAF2F0}
+  .band{background:var(--dark-2);color:#EAF2F0}
   .band .eyebrow{color:#7FE3AE}
   .band h2{color:#fff}
   .band .sec-head p{color:#AFC6C1}
 
   /* stats */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--card-shadow)}
   .stat .big{font-family:var(--serif);font-size:2.5rem;color:var(--primary);line-height:1}
   .stat p{margin:10px 0 0;color:var(--muted);font-size:.95rem}
 
   /* two-poles */
   .poles{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch;margin-top:8px}
-  .pole{border:1px solid var(--line);border-radius:14px;padding:22px;background:var(--panel)}
-  .pole.bad{opacity:.92}
+  .pole{border:1px solid var(--line);border-radius:14px;padding:22px;background:var(--panel);box-shadow:var(--card-shadow)}
+  .pole.bad{opacity:1}
   .pole h3{font-size:1.05rem;margin-bottom:8px}
   .pole.bad h3{color:var(--danger)}
   .pole.good{border-color:var(--primary);background:var(--primary-soft)}
@@ -162,7 +182,7 @@
 
   /* feature cards */
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--card-shadow)}
   .card .ic{width:38px;height:38px;border-radius:10px;background:var(--primary-soft);
     display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:1.1rem}
   .card h3{font-size:1.08rem;margin-bottom:7px}
@@ -195,16 +215,16 @@
   .callout h3{font-size:1.05rem;color:var(--primary-700);margin-bottom:8px}
   .callout p{margin:0;color:var(--ink);font-size:.95rem}
 
-  footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted);font-size:.88rem}
+  footer{background:var(--dark);border-top:1px solid var(--dark-line);padding:40px 0;color:var(--muted-d);font-size:.88rem}
   footer .wrap{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
-  footer a{font-weight:600}
-  .disclaim{max-width:62ch;margin-top:10px;font-size:.82rem;line-height:1.55}
+  footer a{font-weight:600;color:var(--teal)}
+  .disclaim{max-width:62ch;margin-top:10px;font-size:.82rem;line-height:1.55;color:var(--muted-d)}
 
   @media (max-width:880px){
     .hero-grid,.gateblock,.never{grid-template-columns:1fr}
     .stats,.cards,.steps{grid-template-columns:1fr}
     .poles{grid-template-columns:1fr}.vs{justify-self:center}
-    header{padding:44px 0 8px}
+    header{padding:46px 0 46px}
   }
   @media (prefers-reduced-motion:reduce){
     .bubble,.term,.sheet,.stopcard,.gate{opacity:1!important;transform:none!important;transition:none!important}
@@ -346,7 +366,7 @@
 </section>
 
 <!-- HOW TO USE -->
-<section style="background:#F5F2EB;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+<section style="background:var(--tint);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">How to use it</p>
@@ -381,7 +401,7 @@
 </section>
 
 <!-- GET -->
-<section id="get" style="background:var(--primary);color:#fff;text-align:center">
+<section id="get" style="background:linear-gradient(135deg,#0E807A 0%,#0B1618 100%);color:#fff;text-align:center">
   <div class="wrap">
     <p class="eyebrow" style="color:#BfE6E2">Open source · MIT</p>
     <h2 style="color:#fff;max-width:20ch;margin:0 auto 16px">Get the folder. Use it before your next visit.</h2>

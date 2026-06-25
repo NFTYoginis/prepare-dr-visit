@@ -1,5 +1,7 @@
 # Visit Ready
 
+![Visit Ready — walk into your appointment ready](docs/og.png)
+
 **A folder-based specialist that turns your messy symptom story into a one-page sheet you can hand to your doctor — and that refuses to play doctor itself.**
 
 Built for Weekly Comp #8: The Wildcard. The client is me. See [`brief.md`](brief.md).
