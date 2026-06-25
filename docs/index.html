@@ -69,7 +69,7 @@
   .device-bar i:nth-child(1){background:#E7A3A3}.device-bar i:nth-child(2){background:#E9CE9A}
   .device-bar i:nth-child(3){background:#A7CD9E}
   .device-bar .ttl{margin-left:8px;font-size:.78rem;color:var(--muted);font-weight:600}
-  .screen{padding:18px;min-height:430px;display:flex;flex-direction:column;gap:12px;
+  .screen{padding:18px;height:464px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;
     background:linear-gradient(180deg,#FCFBF8,#F7F5F0)}
   .bubble{max-width:88%;padding:11px 14px;border-radius:14px;font-size:.92rem;opacity:0;
     transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}
@@ -106,6 +106,30 @@
   .replay{margin-top:12px;align-self:flex-start;font-size:.82rem;color:var(--muted);
     background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:4px 0}
   .replay:hover{color:var(--primary-700)}
+
+  /* demo: scenario tabs, caption, stop card, inline gate */
+  .segs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--line);background:#fff}
+  .seg{flex:1;font:600 .76rem var(--sans);padding:7px 6px;border:none;background:transparent;
+    color:var(--muted);border-radius:8px;cursor:pointer;transition:.15s}
+  .seg:hover{color:var(--ink);background:#F5F2EB}
+  .seg.on{background:var(--primary-soft);color:var(--primary-700)}
+  .demo-cap{padding:11px 15px;border-top:1px solid var(--line);background:#fff;font-size:.82rem;
+    color:var(--muted);min-height:44px;display:flex;align-items:center;line-height:1.4}
+  .stopcard{align-self:stretch;background:#FCEEE9;border:1px solid var(--danger);
+    border-left:4px solid var(--danger);border-radius:12px;padding:12px 14px;font-size:.9rem;
+    color:#5A2A20;opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s}
+  .stopcard.show{opacity:1;transform:none}
+  .stopcard .who{color:var(--danger);font-weight:700;font-size:.7rem;text-transform:uppercase;
+    letter-spacing:.06em;margin-bottom:5px}
+  .gate{align-self:flex-start;max-width:94%;background:#10211F;border-radius:11px;padding:10px 12px;
+    font-family:var(--mono);font-size:.74rem;opacity:0;transform:translateY(8px);
+    transition:opacity .4s,transform .4s}
+  .gate.show{opacity:1;transform:none}
+  .gate-h{color:#7FA39C;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+  .gate-l{line-height:1.65;transition:opacity .3s}
+  .gate-l.fail{color:#F08E78}
+  .gate-l.pass{color:#7FE3AE;font-weight:700}
+  .gate-l.dim{opacity:.45;text-decoration:line-through}
 
   /* generic sections */
   section{padding:64px 0}
@@ -183,7 +207,7 @@
     header{padding:44px 0 8px}
   }
   @media (prefers-reduced-motion:reduce){
-    .bubble,.term,.sheet{opacity:1!important;transform:none!important;transition:none!important}
+    .bubble,.term,.sheet,.stopcard,.gate{opacity:1!important;transform:none!important;transition:none!important}
     .caret::after{display:none}
     html{scroll-behavior:auto}
   }
@@ -218,10 +242,14 @@
 
     <!-- DEMO DEVICE -->
     <div class="device" id="demo">
-      <div class="device-bar"><i></i><i></i><i></i><span class="ttl">Visit Ready</span></div>
-      <div class="screen" id="screen">
-        <!-- filled by JS; static fallback rendered for reduced-motion below -->
+      <div class="device-bar"><i></i><i></i><i></i><span class="ttl">Visit Ready · interactive demo</span></div>
+      <div class="segs" role="tablist" aria-label="Demo scenarios">
+        <button class="seg on" data-k="prep" role="tab">Prep a visit</button>
+        <button class="seg" data-k="refuse" role="tab">Ask for a diagnosis</button>
+        <button class="seg" data-k="emergency" role="tab">An emergency</button>
       </div>
+      <div class="screen" id="screen"></div>
+      <div class="demo-cap" id="demo-cap"></div>
     </div>
   </div>
 </header>
@@ -375,19 +403,17 @@
 <script>
 (function(){
   // ---- wire the GitHub CTA in one place (set when the repo is published) ----
-  var REPO_URL = ""; // e.g. "https://github.com/USERNAME/visit-ready"
+  var REPO_URL = ""; // e.g. "https://github.com/USERNAME/prepare-dr-visit"
   if(REPO_URL){
     ["nav-cta","hero-get","get-cta","foot-get"].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.setAttribute("href",REPO_URL);
+      var e=document.getElementById(id); if(e) e.setAttribute("href",REPO_URL);
     });
   }
 
   var screen = document.getElementById('screen');
+  var capEl  = document.getElementById('demo-cap');
+  var segs   = Array.prototype.slice.call(document.querySelectorAll('.seg'));
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // ---- demo transcript (honest to the real tool output) ----
-  var USER = "My GP referred me to a cardiologist — appointment's Tuesday. For ~3 weeks I've had chest tightness that comes and goes, worse climbing stairs, eases when I sit. I'm 54, I take lisinopril and ibuprofen now and then. Honestly a bit scared. Help me get ready?";
-  var SAFETY = "Quick safety note, not a diagnosis: if that tightness ever turns severe — or comes with sweating, nausea, or breathlessness — treat it as an emergency and call for help, don't wait for Tuesday. Yours eases with rest, so let's build your sheet.";
 
   function el(tag, cls, html){var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e;}
   function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
@@ -402,71 +428,108 @@
     '<div class="row"><span class="n">5</span><div><b>Also ask:</b> safe to exercise meanwhile? what sends me to the ER?</div></div>'+
     '<div class="row"><span class="n">6</span><div><b>History:</b> high blood pressure · age 54</div></div>';
   }
-  function termMarkup(){
-    return ''+
-    '<span class="ln muted">$ python3 check.py draft.md</span>'+
-    '<span class="ln"><span class="fail">GATE FAILED</span> — verdict found:</span>'+
-    '<span class="ln">  <span class="flag">[diagnostic verdict]</span> "this is probably angina"</span>'+
-    '<span class="ln muted">✗ blocked — rewriting as a question…</span>'+
-    '<span class="ln muted"> </span>'+
-    '<span class="ln muted">$ python3 check.py draft.md</span>'+
-    '<span class="ln"><span class="pass">GATE PASSED</span> — safe to show ✓</span>';
-  }
 
-  function renderStatic(){
-    screen.innerHTML='';
-    var u=el('div','bubble user show',USER);
-    var s=el('div','bubble bot show','<div class="who">Visit Ready</div>'+SAFETY);
-    var t=el('div','term show'); t.innerHTML=termMarkup();
-    var sh=el('div','sheet show'); sh.innerHTML=sheetMarkup();
-    [u,s,t,sh].forEach(function(n){screen.appendChild(n);});
-  }
+  // ---- three scenarios, every line lifted from the real examples.md ----
+  var SCENARIOS = {
+    prep: { cap:"Messy story in, a clinician-ready page out — checked before you ever see it.", steps:[
+      {t:'user', text:"My GP referred me to a cardiologist — appointment's Tuesday. For ~3 weeks I've had chest tightness that comes and goes, worse climbing stairs, eases when I sit. I'm 54, I take lisinopril and ibuprofen now and then. Honestly a bit scared. Help me get ready?"},
+      {t:'bot', text:"Quick safety note, not a diagnosis: if that tightness ever turns severe — or comes with sweating, nausea, or breathlessness — treat it as an emergency and call for help, don't wait for Tuesday. Yours eases with rest, so let's build your sheet."},
+      {t:'gate'},
+      {t:'sheet'}
+    ]},
+    refuse: { cap:"Ask it to diagnose you and it won't. It redirects you toward a real answer instead.", steps:[
+      {t:'user', text:"I've had a lump under my arm for a week. Just tell me — is it cancer?"},
+      {t:'bot', text:"I won't guess at that — a bot's guess about a lump would only feed the worry without telling you anything real. And a week is exactly the right time to get it looked at."},
+      {t:'bot', text:"What I <i>can</i> do is make sure you walk in able to get a straight answer fast. Let's describe the lump clearly — when you noticed it, whether it's changed, whether it's tender — and put your real question, &ldquo;what is this, and what's the next step to find out,&rdquo; right at the top."}
+    ]},
+    emergency: { cap:"It recognizes what shouldn't wait — and stops, calmly, without diagnosing.", steps:[
+      {t:'user', text:"The left side of my face started drooping about an hour ago and my arm feels weak. I've got a neurology appointment next month though — what should I bring?"},
+      {t:'stop', text:"I'm going to stop you here — this is a safety point, not a diagnosis. A face drooping on one side with sudden arm weakness needs to be checked <b>right now</b>, not at next month's appointment. Please call emergency services or get to an emergency room immediately. This isn't something to prepare for — it's something to act on now."}
+    ]}
+  };
 
-  async function typeInto(node, text, speed){
+  var token = 0; // bumps on every play() — cancels any in-flight animation
+
+  async function typeInto(node, text, speed, mine){
     node.classList.add('show','caret');
     for(var i=0;i<text.length;i++){
+      if(mine!==token) return false;
       node.insertAdjacentText('beforeend', text[i]);
-      if(i%2===0) await sleep(speed);
+      if(i%2===0){ await sleep(speed); screen.scrollTop=screen.scrollHeight; }
     }
     node.classList.remove('caret');
+    return true;
   }
 
-  var running=false;
-  async function play(){
-    if(running) return; running=true;
+  async function gateStep(mine){
+    var g=el('div','gate','<div class="gate-h">gate check · check.py</div>'+
+      '<div class="gate-l fail" id="gl">✕ "this is probably angina" — diagnostic verdict — blocked</div>');
+    screen.appendChild(g); screen.scrollTop=screen.scrollHeight;
+    await sleep(30); if(mine!==token) return; g.classList.add('show');
+    await sleep(1150); if(mine!==token) return;
+    g.querySelector('#gl').classList.add('dim');
+    g.appendChild(el('div','gate-l pass','✓ no diagnosis · prognosis · treatment — safe to show'));
+    screen.scrollTop=screen.scrollHeight;
+    await sleep(950);
+  }
+
+  function renderStatic(sc){
     screen.innerHTML='';
-    // user types
-    var u=el('div','bubble user'); screen.appendChild(u);
-    await sleep(350);
-    await typeInto(u, USER, 14);
-    await sleep(500);
-    // bot safety
-    var s=el('div','bubble bot','<div class="who">Visit Ready</div>'+SAFETY);
-    screen.appendChild(s); await sleep(30); s.classList.add('show');
-    await sleep(1100);
-    // gate terminal
-    var t=el('div','term'); t.innerHTML=termMarkup();
-    screen.appendChild(t); await sleep(30); t.classList.add('show');
-    await sleep(1600);
-    // sheet
-    var sh=el('div','sheet'); sh.innerHTML=sheetMarkup();
-    screen.appendChild(sh); await sleep(30); sh.classList.add('show');
-    // replay
-    var rep=el('button','replay','↻ Replay');
-    rep.addEventListener('click', function(){running=false; play();});
-    screen.appendChild(rep);
-    running=false;
+    sc.steps.forEach(function(st){
+      if(st.t==='user') screen.appendChild(el('div','bubble user show',st.text));
+      else if(st.t==='bot') screen.appendChild(el('div','bubble bot show','<div class="who">Visit Ready</div>'+st.text));
+      else if(st.t==='stop') screen.appendChild(el('div','stopcard show','<div class="who">⚠ Visit Ready · safety stop</div>'+st.text));
+      else if(st.t==='gate') screen.appendChild(el('div','gate show','<div class="gate-h">gate check · check.py</div><div class="gate-l fail dim">✕ "this is probably angina" — diagnostic verdict — blocked</div><div class="gate-l pass">✓ no diagnosis · prognosis · treatment — safe to show</div>'));
+      else if(st.t==='sheet') screen.appendChild(el('div','sheet show',sheetMarkup()));
+    });
   }
 
-  if(reduce){ renderStatic(); return; }
+  async function play(key){
+    var mine=++token;
+    var sc=SCENARIOS[key];
+    segs.forEach(function(s){ s.classList.toggle('on', s.dataset.k===key); });
+    capEl.textContent=sc.cap;
+    if(reduce){ renderStatic(sc); return; }
+    screen.innerHTML='';
+    await sleep(220);
+    for(var i=0;i<sc.steps.length;i++){
+      if(mine!==token) return;
+      var st=sc.steps[i];
+      if(st.t==='user'){
+        var u=el('div','bubble user'); screen.appendChild(u);
+        await sleep(300); if(mine!==token) return;
+        var ok=await typeInto(u, st.text, 12, mine); if(!ok) return;
+        await sleep(450);
+      } else if(st.t==='bot'){
+        var b=el('div','bubble bot','<div class="who">Visit Ready</div>'+st.text);
+        screen.appendChild(b); await sleep(30); if(mine!==token) return; b.classList.add('show');
+        screen.scrollTop=screen.scrollHeight; await sleep(1250);
+      } else if(st.t==='stop'){
+        var sp=el('div','stopcard','<div class="who">⚠ Visit Ready · safety stop</div>'+st.text);
+        screen.appendChild(sp); await sleep(30); if(mine!==token) return; sp.classList.add('show');
+        screen.scrollTop=screen.scrollHeight; await sleep(800);
+      } else if(st.t==='gate'){
+        await gateStep(mine); if(mine!==token) return;
+      } else if(st.t==='sheet'){
+        var sh=el('div','sheet',sheetMarkup()); screen.appendChild(sh);
+        await sleep(30); if(mine!==token) return; sh.classList.add('show');
+        screen.scrollTop=screen.scrollHeight; await sleep(300);
+      }
+    }
+    var rep=el('button','replay','↻ Replay');
+    rep.addEventListener('click', function(){ play(key); });
+    screen.appendChild(rep); screen.scrollTop=screen.scrollHeight;
+  }
 
-  // start when the demo scrolls into view (once), then it can be replayed
+  segs.forEach(function(s){ s.addEventListener('click', function(){ play(s.dataset.k); }); });
+
+  // autoplay the first scenario when the demo scrolls into view; tabs explore the rest
   var started=false;
   var io=new IntersectionObserver(function(entries){
     entries.forEach(function(e){
-      if(e.isIntersecting && !started){ started=true; play(); io.disconnect(); }
+      if(e.isIntersecting && !started){ started=true; play('prep'); io.disconnect(); }
     });
-  },{threshold:.35});
+  },{threshold:.3});
   io.observe(document.getElementById('demo'));
 })();
 </script>
