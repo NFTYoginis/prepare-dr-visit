@@ -4,6 +4,8 @@
 
 Built for Weekly Comp #8: The Wildcard. The client is me. See [`brief.md`](brief.md).
 
+**Landing page + demo:** [`docs/index.html`](docs/index.html) walks the whole flow — messy story in, the gate blocking a leak, the Visit Sheet out. Enable GitHub Pages (Settings → Pages → `main` / `/docs`) to host it live.
+
 ---
 
 ## The problem it solves

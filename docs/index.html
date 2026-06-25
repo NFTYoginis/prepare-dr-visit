@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Visit Ready — walk into your appointment ready</title>
+<meta name="description" content="Visit Ready turns your messy symptom story into a one-page sheet your doctor can read in 30 seconds. It will not diagnose you — and a deterministic check enforces that before you ever see the sheet." />
+<meta property="og:title" content="Visit Ready — walk into your appointment ready" />
+<meta property="og:description" content="A folder-based specialist that prepares you for a doctor's visit and refuses to play doctor. Open source." />
+<meta property="og:type" content="website" />
+<style>
+  :root{
+    --paper:#FBFAF7; --panel:#FFFFFF; --ink:#1C2A2E; --muted:#5B6B6E;
+    --primary:#0F6E68; --primary-700:#0B544F; --primary-soft:#E4F0EE;
+    --accent:#E07A4E; --line:#E7E2D9; --danger:#C2452D; --ok:#1E8A5B;
+    --shadow:0 18px 50px -22px rgba(20,42,46,.30);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  a{color:var(--primary-700)}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.12;letter-spacing:-.01em;margin:0}
+  .eyebrow{font-family:var(--sans);font-size:.78rem;font-weight:700;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--primary);margin:0 0 14px}
+  .btn{display:inline-flex;align-items:center;gap:.5em;font-weight:600;font-size:.98rem;
+    padding:13px 22px;border-radius:999px;text-decoration:none;border:1.5px solid transparent;
+    transition:transform .15s ease, box-shadow .2s ease, background .2s ease;cursor:pointer}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px -10px rgba(15,110,104,.7)}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--primary);color:var(--primary-700)}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;background:rgba(251,250,247,.86);
+    backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em;
+    font-size:1.06rem;text-decoration:none;color:var(--ink)}
+  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--primary);
+    display:inline-flex;align-items:center;justify-content:center}
+  .brand .dot::after{content:"";width:9px;height:9px;border:2px solid #fff;border-radius:50%;
+    border-right-color:transparent;transform:rotate(-30deg)}
+  nav .btn{padding:9px 16px;font-size:.9rem}
+
+  /* hero */
+  header{padding:74px 0 18px}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+  h1{font-size:clamp(2.1rem,4.6vw,3.4rem)}
+  .lede{font-size:1.16rem;color:var(--muted);margin:20px 0 28px;max-width:38ch}
+  .lede b{color:var(--ink);font-weight:600}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap}
+  .microtrust{margin-top:18px;font-size:.86rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+  .microtrust span{display:inline-flex;align-items:center;gap:6px}
+  .microtrust .tick{color:var(--primary)}
+
+  /* device / demo */
+  .device{background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .device-bar{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--line);
+    background:#fff}
+  .device-bar i{width:11px;height:11px;border-radius:50%;background:#E5DFD4;display:inline-block}
+  .device-bar i:nth-child(1){background:#E7A3A3}.device-bar i:nth-child(2){background:#E9CE9A}
+  .device-bar i:nth-child(3){background:#A7CD9E}
+  .device-bar .ttl{margin-left:8px;font-size:.78rem;color:var(--muted);font-weight:600}
+  .screen{padding:18px;min-height:430px;display:flex;flex-direction:column;gap:12px;
+    background:linear-gradient(180deg,#FCFBF8,#F7F5F0)}
+  .bubble{max-width:88%;padding:11px 14px;border-radius:14px;font-size:.92rem;opacity:0;
+    transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}
+  .bubble.show{opacity:1;transform:none}
+  .bubble.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:5px}
+  .bubble.bot{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:5px}
+  .bubble.bot .who{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--primary);margin-bottom:4px}
+  .caret::after{content:"▌";color:#fff;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* gate terminal */
+  .term{font-family:var(--mono);font-size:.78rem;background:#10211F;color:#CFE3DF;
+    border-radius:12px;padding:13px 15px;opacity:0;transform:translateY(8px);
+    transition:opacity .4s,transform .4s;line-height:1.7}
+  .term.show{opacity:1;transform:none}
+  .term .ln{white-space:pre-wrap;display:block}
+  .term .muted{color:#7FA39C}
+  .term .fail{color:#F08E78;font-weight:700}
+  .term .pass{color:#7FE3AE;font-weight:700}
+  .term .flag{color:#F0C078}
+
+  /* visit sheet card */
+  .sheet{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 17px;
+    opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s}
+  .sheet.show{opacity:1;transform:none}
+  .sheet h4{font-family:var(--sans);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--primary);margin:0 0 10px;display:flex;align-items:center;justify-content:space-between}
+  .sheet h4 .ok{color:var(--ok);font-weight:700;letter-spacing:0;text-transform:none;font-size:.78rem}
+  .row{font-size:.86rem;padding:6px 0;border-top:1px dashed var(--line);display:flex;gap:9px}
+  .row:first-of-type{border-top:none}
+  .row .n{color:var(--primary);font-weight:700;flex:none;width:1.1em}
+  .row b{font-weight:600}
+  .replay{margin-top:12px;align-self:flex-start;font-size:.82rem;color:var(--muted);
+    background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:4px 0}
+  .replay:hover{color:var(--primary-700)}
+
+  /* generic sections */
+  section{padding:64px 0}
+  .sec-head{max-width:60ch;margin-bottom:36px}
+  .sec-head .eyebrow{margin-bottom:12px}
+  h2{font-size:clamp(1.6rem,3.2vw,2.3rem)}
+  .sec-head p{color:var(--muted);font-size:1.08rem;margin:14px 0 0}
+
+  .band{background:#11201E;color:#EAF2F0}
+  .band .eyebrow{color:#7FE3AE}
+  .band h2{color:#fff}
+  .band .sec-head p{color:#AFC6C1}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .stat .big{font-family:var(--serif);font-size:2.5rem;color:var(--primary);line-height:1}
+  .stat p{margin:10px 0 0;color:var(--muted);font-size:.95rem}
+
+  /* two-poles */
+  .poles{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch;margin-top:8px}
+  .pole{border:1px solid var(--line);border-radius:14px;padding:22px;background:var(--panel)}
+  .pole.bad{opacity:.92}
+  .pole h3{font-size:1.05rem;margin-bottom:8px}
+  .pole.bad h3{color:var(--danger)}
+  .pole.good{border-color:var(--primary);background:var(--primary-soft)}
+  .pole.good h3{color:var(--primary-700)}
+  .pole p{margin:0;color:var(--muted);font-size:.92rem}
+  .vs{align-self:center;font-weight:700;color:var(--muted);font-size:.85rem}
+
+  /* feature cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .card .ic{width:38px;height:38px;border-radius:10px;background:var(--primary-soft);
+    display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:1.1rem}
+  .card h3{font-size:1.08rem;margin-bottom:7px}
+  .card p{margin:0;color:var(--muted);font-size:.93rem}
+
+  /* gate band terminal (static) */
+  .gateblock{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center;margin-top:8px}
+  .gateblock .term{opacity:1;transform:none;font-size:.8rem}
+  .gateblock .copy h3{color:#fff;font-size:1.25rem;margin-bottom:10px;font-family:var(--serif)}
+  .gateblock .copy p{color:#AFC6C1;margin:0 0 12px}
+  .gateblock .copy code{background:rgba(255,255,255,.08);padding:2px 7px;border-radius:6px;
+    font-family:var(--mono);font-size:.82rem;color:#CFE3DF}
+
+  /* steps */
+  .steps{counter-reset:s;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .step{position:relative;padding-left:0}
+  .step .num{font-family:var(--serif);font-size:1.5rem;color:var(--primary);font-weight:700}
+  .step h3{font-size:1.05rem;margin:6px 0 6px}
+  .step p{margin:0;color:var(--muted);font-size:.93rem}
+  .step code{font-family:var(--mono);font-size:.82rem;background:#fff;border:1px solid var(--line);
+    padding:2px 6px;border-radius:6px}
+
+  /* never list */
+  .never{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:start}
+  .never ul{list-style:none;padding:0;margin:0}
+  .never li{padding:12px 0;border-top:1px solid var(--line);display:flex;gap:11px;font-size:1rem}
+  .never li:first-child{border-top:none}
+  .never .x{color:var(--danger);font-weight:700;flex:none}
+  .callout{background:var(--primary-soft);border:1px solid var(--primary);border-radius:14px;padding:22px}
+  .callout h3{font-size:1.05rem;color:var(--primary-700);margin-bottom:8px}
+  .callout p{margin:0;color:var(--ink);font-size:.95rem}
+
+  footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted);font-size:.88rem}
+  footer .wrap{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  footer a{font-weight:600}
+  .disclaim{max-width:62ch;margin-top:10px;font-size:.82rem;line-height:1.55}
+
+  @media (max-width:880px){
+    .hero-grid,.gateblock,.never{grid-template-columns:1fr}
+    .stats,.cards,.steps{grid-template-columns:1fr}
+    .poles{grid-template-columns:1fr}.vs{justify-self:center}
+    header{padding:44px 0 8px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bubble,.term,.sheet{opacity:1!important;transform:none!important;transition:none!important}
+    .caret::after{display:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="dot"></span>Visit&nbsp;Ready</a>
+    <a class="btn btn-primary" id="nav-cta" href="#get">Get the folder</a>
+  </div>
+</nav>
+
+<a id="top"></a>
+<header>
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Doctor-visit prep · open source</p>
+      <h1>Your specialist gives you 15&nbsp;minutes. Walk in ready.</h1>
+      <p class="lede">Visit Ready turns your messy symptom story into a <b>one-page sheet your doctor can read in 30 seconds</b> — organized the way doctors actually think. It will not diagnose you. <b>That's the point.</b></p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#demo">See it work ↓</a>
+        <a class="btn btn-ghost" id="hero-get" href="#get">Get the folder</a>
+      </div>
+      <div class="microtrust">
+        <span><b class="tick">✓</b> No account</span>
+        <span><b class="tick">✓</b> Nothing stored</span>
+        <span><b class="tick">✓</b> Not medical advice</span>
+      </div>
+    </div>
+
+    <!-- DEMO DEVICE -->
+    <div class="device" id="demo">
+      <div class="device-bar"><i></i><i></i><i></i><span class="ttl">Visit Ready</span></div>
+      <div class="screen" id="screen">
+        <!-- filled by JS; static fallback rendered for reduced-motion below -->
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PROBLEM -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">The problem</p>
+      <h2>Fifteen minutes, and half of it lost.</h2>
+      <p>The appointment is short and the clock is already running. You ramble, forget your medications, bury the one question that mattered, and walk out holding a plan you didn't fully understand. The doctor isn't the problem — the preparation is.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="big">15–18</div><p>minutes of face time in a typical visit — the rest is waiting and paperwork.</p></div>
+      <div class="stat"><div class="big">94%</div><p>of physicians say short appointment times put patients at risk.</p></div>
+      <div class="stat"><div class="big">1</div><p>page is all it takes to fix it — if it's organized the way a clinician reads.</p></div>
+    </div>
+
+    <div style="margin-top:40px">
+      <div class="poles">
+        <div class="pole bad">
+          <h3>Symptom-checker bots</h3>
+          <p>Try to <b>diagnose</b> you. Anxiety-inducing, and the "I read online I have X" opener is the one doctors dread.</p>
+        </div>
+        <div class="vs">the gap</div>
+        <div class="pole bad">
+          <h3>Generic checklists</h3>
+          <p>One-size PDFs that leave every bit of the organizing — and the judgment — on you.</p>
+        </div>
+      </div>
+      <div class="poles" style="margin-top:14px;grid-template-columns:1fr">
+        <div class="pole good">
+          <h3>Visit Ready sits in between</h3>
+          <p>It does the organizing for you, the way a doctor's mind triages — and it draws a hard line at diagnosis. Prep and translation, never a verdict.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE INVARIANT / GATE -->
+<section class="band">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">The part that isn't a promise</p>
+      <h2>One thing it verifies. Mechanically.</h2>
+      <p>Most prep tools <em>promise</em> they won't overstep. Visit Ready commits to a single rule and enforces it with a check that blocks the sheet before you ever see it — diagnosis, prognosis, and treatment talk don't get through.</p>
+    </div>
+    <div class="gateblock">
+      <div class="term" aria-hidden="true">
+<span class="ln muted">$ python3 check.py draft.md</span>
+<span class="ln"><span class="fail">GATE FAILED</span> — a medical verdict slipped in:</span>
+<span class="ln">  line 1: <span class="flag">[diagnostic verdict]</span> "this is probably angina"</span>
+<span class="ln">  line 3: <span class="flag">[treatment]</span> "you should start a statin"</span>
+<span class="ln muted">✗ blocked — rewrite the verdict as a question, re-run</span>
+<span class="ln muted"> </span>
+<span class="ln muted">$ python3 check.py draft.md</span>
+<span class="ln"><span class="pass">GATE PASSED</span> — no diagnosis, prognosis, or treatment. Safe to show. ✓</span>
+      </div>
+      <div class="copy">
+        <h3>The single verifiable invariant</h3>
+        <p>A Visit Sheet asserts <b>no diagnosis, no prognosis, no treatment recommendation.</b> It organizes your words and questions — it never delivers a verdict.</p>
+        <p>It's enforced by <code>check.py</code> — stdlib only, run <code>--self-test</code> to watch it catch real leaks. The discipline isn't asked for. It's checked.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU GET -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">What you get</p>
+      <h2>A sheet built for the room you're walking into.</h2>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <div class="ic">🗒️</div>
+        <h3>The Visit Sheet</h3>
+        <p>One page: reason for the visit, a clean symptom timeline, your real med list, and your top questions in priority order — most important first.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🚪</div>
+        <h3>The leave-the-room checklist</h3>
+        <p>So you finish the visit understanding the plan, not just starting it well — including the teach-back that catches misunderstandings.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🛑</div>
+        <h3>The safety stop</h3>
+        <p>If what you describe shouldn't wait for an appointment at all, it stops and points you to immediate care — calmly, and without diagnosing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW TO USE -->
+<section style="background:#F5F2EB;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">How to use it</p>
+      <h2>It's a folder. Paste it into your AI assistant.</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Load the folder</h3><p>Paste <code>identity.md</code> and <code>rules.md</code> into your AI assistant as the system prompt — attach the <code>reference/</code> files if your tool supports it.</p></div>
+      <div class="step"><div class="num">2</div><h3>Tell it your situation</h3><p>What's going on, which specialist you're seeing, what you most want to know. Answer its few clarifying questions.</p></div>
+      <div class="step"><div class="num">3</div><h3>Get your sheet</h3><p>It drafts the sheet, runs the gate, and hands you a clean one-pager. Print it or screenshot it. Walk in ready.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- BOUNDARY -->
+<section>
+  <div class="wrap never">
+    <div>
+      <p class="eyebrow">Where the line is</p>
+      <h2 style="margin-bottom:18px">What it will never do.</h2>
+      <ul>
+        <li><span class="x">✕</span> Tell you what condition you have, or how likely one is.</li>
+        <li><span class="x">✕</span> Tell you which medication, test, or treatment to ask for.</li>
+        <li><span class="x">✕</span> Interpret a test result into a diagnosis.</li>
+        <li><span class="x">✕</span> Pretend to be a second opinion, a triage engine, or a medical device.</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <h3>In an emergency, don't use this.</h3>
+      <p>Call your local emergency number. Visit Ready is a communication-prep tool — it organizes your own words for a conversation with a qualified clinician. It is not medical advice and not a medical device.</p>
+    </div>
+  </div>
+</section>
+
+<!-- GET -->
+<section id="get" style="background:var(--primary);color:#fff;text-align:center">
+  <div class="wrap">
+    <p class="eyebrow" style="color:#BfE6E2">Open source · MIT</p>
+    <h2 style="color:#fff;max-width:20ch;margin:0 auto 16px">Get the folder. Use it before your next visit.</h2>
+    <p style="color:#D7ECEA;max-width:46ch;margin:0 auto 26px">Free, no account, nothing stored. Built as a portfolio piece — and a tool worth actually keeping.</p>
+    <a class="btn btn-ghost" id="get-cta" href="#" style="background:#fff;color:var(--primary-700);border-color:#fff">View on GitHub →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="brand" style="margin-bottom:6px"><span class="dot"></span>Visit Ready</div>
+      <div class="disclaim">Not medical advice and not a medical device. It does not diagnose, assess, or triage any medical condition. In an emergency, call your local emergency number. Built for Weekly Comp #8: The Wildcard.</div>
+    </div>
+    <div><a id="foot-get" href="#">GitHub</a> · MIT License</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---- wire the GitHub CTA in one place (set when the repo is published) ----
+  var REPO_URL = ""; // e.g. "https://github.com/USERNAME/visit-ready"
+  if(REPO_URL){
+    ["nav-cta","hero-get","get-cta","foot-get"].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.setAttribute("href",REPO_URL);
+    });
+  }
+
+  var screen = document.getElementById('screen');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- demo transcript (honest to the real tool output) ----
+  var USER = "My GP referred me to a cardiologist — appointment's Tuesday. For ~3 weeks I've had chest tightness that comes and goes, worse climbing stairs, eases when I sit. I'm 54, I take lisinopril and ibuprofen now and then. Honestly a bit scared. Help me get ready?";
+  var SAFETY = "Quick safety note, not a diagnosis: if that tightness ever turns severe — or comes with sweating, nausea, or breathlessness — treat it as an emergency and call for help, don't wait for Tuesday. Yours eases with rest, so let's build your sheet.";
+
+  function el(tag, cls, html){var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e;}
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+  function sheetMarkup(){
+    return ''+
+    '<h4>Visit Sheet — Cardiology · Tuesday <span class="ok">✓ passed the gate</span></h4>'+
+    '<div class="row"><span class="n">1</span><div><b>Reason:</b> chest tightness on exertion, ~3 weeks (GP referral)</div></div>'+
+    '<div class="row"><span class="n">2</span><div><b>Timeline:</b> gradual onset · tight, not sharp · worse on stairs · eases with rest · steady so far</div></div>'+
+    '<div class="row"><span class="n">3</span><div><b>Meds:</b> lisinopril (daily) · ibuprofen (as needed)</div></div>'+
+    '<div class="row"><span class="n">4</span><div><b>Top question:</b> what\'s the most likely cause, and what test tells us?</div></div>'+
+    '<div class="row"><span class="n">5</span><div><b>Also ask:</b> safe to exercise meanwhile? what sends me to the ER?</div></div>'+
+    '<div class="row"><span class="n">6</span><div><b>History:</b> high blood pressure · age 54</div></div>';
+  }
+  function termMarkup(){
+    return ''+
+    '<span class="ln muted">$ python3 check.py draft.md</span>'+
+    '<span class="ln"><span class="fail">GATE FAILED</span> — verdict found:</span>'+
+    '<span class="ln">  <span class="flag">[diagnostic verdict]</span> "this is probably angina"</span>'+
+    '<span class="ln muted">✗ blocked — rewriting as a question…</span>'+
+    '<span class="ln muted"> </span>'+
+    '<span class="ln muted">$ python3 check.py draft.md</span>'+
+    '<span class="ln"><span class="pass">GATE PASSED</span> — safe to show ✓</span>';
+  }
+
+  function renderStatic(){
+    screen.innerHTML='';
+    var u=el('div','bubble user show',USER);
+    var s=el('div','bubble bot show','<div class="who">Visit Ready</div>'+SAFETY);
+    var t=el('div','term show'); t.innerHTML=termMarkup();
+    var sh=el('div','sheet show'); sh.innerHTML=sheetMarkup();
+    [u,s,t,sh].forEach(function(n){screen.appendChild(n);});
+  }
+
+  async function typeInto(node, text, speed){
+    node.classList.add('show','caret');
+    for(var i=0;i<text.length;i++){
+      node.insertAdjacentText('beforeend', text[i]);
+      if(i%2===0) await sleep(speed);
+    }
+    node.classList.remove('caret');
+  }
+
+  var running=false;
+  async function play(){
+    if(running) return; running=true;
+    screen.innerHTML='';
+    // user types
+    var u=el('div','bubble user'); screen.appendChild(u);
+    await sleep(350);
+    await typeInto(u, USER, 14);
+    await sleep(500);
+    // bot safety
+    var s=el('div','bubble bot','<div class="who">Visit Ready</div>'+SAFETY);
+    screen.appendChild(s); await sleep(30); s.classList.add('show');
+    await sleep(1100);
+    // gate terminal
+    var t=el('div','term'); t.innerHTML=termMarkup();
+    screen.appendChild(t); await sleep(30); t.classList.add('show');
+    await sleep(1600);
+    // sheet
+    var sh=el('div','sheet'); sh.innerHTML=sheetMarkup();
+    screen.appendChild(sh); await sleep(30); sh.classList.add('show');
+    // replay
+    var rep=el('button','replay','↻ Replay');
+    rep.addEventListener('click', function(){running=false; play();});
+    screen.appendChild(rep);
+    running=false;
+  }
+
+  if(reduce){ renderStatic(); return; }
+
+  // start when the demo scrolls into view (once), then it can be replayed
+  var started=false;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting && !started){ started=true; play(); io.disconnect(); }
+    });
+  },{threshold:.35});
+  io.observe(document.getElementById('demo'));
+})();
+</script>
+</body>
+</html>
