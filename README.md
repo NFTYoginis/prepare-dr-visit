@@ -68,7 +68,7 @@ python3 check.py sample-output/blocked-draft.md           # a leaking draft → 
 - [`boundaries.md`](reference/boundaries.md) — scope, privacy, and the not-medical-advice line
 
 ## Important
-Visit Ready is a **communication-prep tool, not medical advice and not a medical device.** It does not diagnose, assess, or triage any medical condition. It organizes your own words for a conversation with a qualified clinician. In an emergency, call your local emergency number. See [`reference/boundaries.md`](reference/boundaries.md).
+Visit Ready is a **communication-prep tool, not medical advice and not a medical device.** It does not diagnose or clinically assess any medical condition; it organizes your own words for a conversation with a qualified clinician. Its one active safety behavior — telling you to seek immediate care if you describe a recognized emergency pattern — is a standard public-health prompt, not a clinical judgment. In an emergency, call your local emergency number. See [`reference/boundaries.md`](reference/boundaries.md).
 
 ## License
 MIT. See [`LICENSE`](LICENSE).

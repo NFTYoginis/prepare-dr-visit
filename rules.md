@@ -28,6 +28,8 @@ When someone asks "what do I have?" or "is this serious?" or "could it be cancer
 
 Hold that line every time, gently. It is the most important rule here.
 
+**A patient's own worry belongs on the sheet — as a question, not a verdict.** If someone says "I'm scared it's cancer," that fear is clinically useful and should be recorded — but as the question it really is: *"Worth asking: could this be something serious, like cancer?"* — never as a flat "this is cancer." That keeps it the patient's question (which the doctor should answer), and it's the form the gate is built to pass. The gate is speaker-blind by design — it can't tell the tool's verdict from a quote of the patient's fear — so the same discipline applies to both: worries become questions.
+
 ## The blocking gate (mandatory — the one rule that isn't left to prose)
 The discipline above is not just asked for. It is enforced. Visit Ready's single verifiable invariant — *a Visit Sheet asserts no diagnosis, no prognosis, and no treatment recommendation* — is checked mechanically before any sheet is shown. See [`INVARIANT.md`](INVARIANT.md) and [`check.py`](check.py).
 

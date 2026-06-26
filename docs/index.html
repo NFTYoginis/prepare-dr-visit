@@ -195,6 +195,21 @@
   .gateblock .copy p{color:#AFC6C1;margin:0 0 12px}
   .gateblock .copy code{background:rgba(255,255,255,.08);padding:2px 7px;border-radius:6px;
     font-family:var(--mono);font-size:.82rem;color:#CFE3DF}
+  .gatetry{margin-top:26px;border-top:1px solid var(--dark-line);padding-top:22px}
+  .gatetry-h{font-size:.86rem;color:#AFC6C1;margin-bottom:11px;line-height:1.5;max-width:70ch}
+  .gatetry-h code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;
+    font-family:var(--mono);font-size:.8rem;color:#CFE3DF}
+  .gatetry-row{display:flex;gap:10px;flex-wrap:wrap}
+  .gatetry-row input{flex:1;min-width:240px;background:#0A1513;border:1px solid var(--dark-line);
+    color:#EAF3F1;border-radius:9px;padding:11px 13px;font-family:var(--mono);font-size:.85rem}
+  .gatetry-row input:focus{outline:none;border-color:var(--teal)}
+  .gatetry-row button{background:var(--teal);color:#06231F;border:none;border-radius:9px;
+    font-weight:700;padding:11px 18px;cursor:pointer;font-size:.9rem;white-space:nowrap}
+  .gatetry-row button:hover{filter:brightness(1.08)}
+  .gatetry-out{margin-top:13px;font-family:var(--mono);font-size:.82rem;min-height:24px;line-height:1.6}
+  .gatetry-out .blocked{color:#F08E78;font-weight:700}
+  .gatetry-out .passed{color:#7FE3AE;font-weight:700}
+  .gatetry-out .lbl{color:#F0C078}
 
   /* steps */
   .steps{counter-reset:s;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
@@ -335,6 +350,14 @@
         <p>It's enforced by <code>check.py</code> — stdlib only, run <code>--self-test</code> to watch it catch real leaks. The discipline isn't asked for. It's checked.</p>
       </div>
     </div>
+    <div class="gatetry">
+      <div class="gatetry-h">Don't take my word for it — run the real gate yourself. Type a line, hit Run (it's the same rules as <code>check.py</code>, running right here in your browser):</div>
+      <div class="gatetry-row">
+        <input id="gate-in" type="text" value="this is probably angina" aria-label="line to gate" />
+        <button id="gate-run" type="button">Run the gate</button>
+      </div>
+      <div id="gate-out" class="gatetry-out"></div>
+    </div>
   </div>
 </section>
 
@@ -438,6 +461,46 @@
   function el(tag, cls, html){var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e;}
   function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
+  // ---- the REAL gate, ported verbatim from check.py (node-parity verified) ----
+  // The demo below and the "try it" box both call gateScan(), so the page doesn't
+  // just animate a gate — it runs one, with the same rules as check.py.
+  var _COND="(?:\\w+itis|\\w+osis|\\w+emia|\\w+opathy|cancer|tumou?r|infection|angina|migraine|fracture|clot|embolism|stroke|heart attack|disease|syndrome|disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|diabetes|asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage)";
+  var _ORGAN="(?:heart|gallbladder|liver|kidneys?|lungs?|thyroid|appendix|pancreas|spleen|bowel|colon|prostate|sinuses?)";
+  var _DESC="(?:cardiac|neurological|respiratory|gastrointestinal|vascular|hormonal|musculoskeletal|psychiatric)";
+  var GATE_RULES=[
+    ["treatment recommendation", new RegExp("\\byou\\s+(?:should|need to|ought to|must|have to)\\s+(?:take|start|stop|switch|try|request|ask for|get|begin)\\b","i")],
+    ["treatment recommendation", new RegExp("\\b(?:ask|request|tell)\\b[^.?!\\n]{0,40}\\b(?:to\\s+(?:prescribe|order|run)|for\\s+(?:a|an|some)\\s+(?:prescription|medication|antibiotic|steroid|statin|scan|mri|ct|biopsy|x-?ray))\\b","i")],
+    ["treatment recommendation", new RegExp("\\bI\\s+(?:recommend|suggest|advise)\\b[^.?!\\n]{0,40}\\b(?:take|try|start|stop|request|ask|get)\\b","i")],
+    ["treatment / plan recommendation", new RegExp("\\b(?:we|i|let'?s|let us)\\s+(?:should\\s+|need to\\s+|ought to\\s+|'ll\\s+|will\\s+|can\\s+)?(?:rule out|start|stop|switch|order|run|test for|prescribe|put (?:you|them) on|begin|trial)\\b","i")],
+    ["diagnostic verdict", new RegExp("\\brule\\s+out\\b","i")],
+    ["diagnostic verdict", new RegExp("\\b(?:this|it|that|the\\s+cause)(?:\\s+(?:is|are|could be|might be|may be|looks like|sounds like|looks|sounds|seems(?:\\sto\\sbe)?|appears(?:\\sto\\sbe)?)|'s)(?:\\s+(?:probably|likely|most likely|definitely))?[^.?!\\n]{0,40}\\b(?:"+_COND+"|your\\s+"+_ORGAN+"|"+_DESC+")\\b","i")],
+    ["diagnostic verdict", new RegExp("\\byou(?:\\s+(?:probably|likely|most likely|may|might|could))?\\s+(?:have|'ve got|have got)\\b[^.?!\\n]{0,40}\\b"+_COND+"\\b","i")],
+    ["diagnostic verdict", new RegExp("\\byou(?:'re| are)\\s+(?:probably\\s+|likely\\s+)?having\\b[^.?!\\n]{0,30}\\b"+_COND+"\\b","i")],
+    ["diagnostic verdict", new RegExp("\\bI\\s+(?:think|believe|suspect|bet|reckon|figure)\\b[^.?!\\n]{0,25}\\b(?:it'?s|this is|that'?s|you have|you'?ve got)\\b","i")],
+    ["prognosis / reassurance verdict", new RegExp("\\b(?:this is|it'?s|that'?s)\\s+(?:serious|dangerous|life-threatening|benign|harmless|nothing to worry about|not serious|probably fine)\\b","i")]
+  ];
+  function gateScan(text){
+    var out=[];
+    String(text).split(/\n/).forEach(function(line,i){
+      GATE_RULES.forEach(function(r){ var m=r[1].exec(line); if(m) out.push({line:i+1,label:r[0],snippet:m[0].trim()}); });
+    });
+    return out;
+  }
+  // interactive "try the gate" panel — same gateScan() as the demo and check.py
+  (function(){
+    var inp=document.getElementById('gate-in'), btn=document.getElementById('gate-run'), out=document.getElementById('gate-out');
+    if(!inp||!btn||!out) return;
+    function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+    function run(){
+      var hits=gateScan(inp.value);
+      if(!hits.length){ out.innerHTML='<span class="passed">✓ GATE PASSED</span> — no diagnosis, prognosis, or treatment. Safe to show.'; }
+      else { var h=hits[0]; out.innerHTML='<span class="blocked">✕ GATE FAILED</span> — <span class="lbl">['+h.label+']</span> &ldquo;'+esc(h.snippet)+'&rdquo; — the sheet may not be shown.'; }
+    }
+    btn.addEventListener('click',run);
+    inp.addEventListener('keydown',function(e){ if(e.key==='Enter') run(); });
+    run();
+  })();
+
   function sheetMarkup(){
     return ''+
     '<h4>Visit Sheet — Cardiology · Tuesday <span class="ok">✓ passed the gate</span></h4>'+
@@ -482,13 +545,16 @@
   }
 
   async function gateStep(mine){
-    var g=el('div','gate','<div class="gate-h">gate check · check.py</div>'+
-      '<div class="gate-l fail" id="gl">✕ "this is probably angina" — diagnostic verdict — blocked</div>');
+    // actually RUN the gate on a real draft line, then on the corrected line
+    var hit=gateScan("Reason I'm here: this is probably angina.")[0];
+    var g=el('div','gate','<div class="gate-h">gate check · running check.py rules</div>'+
+      '<div class="gate-l fail" id="gl">✕ &ldquo;'+(hit?hit.snippet:'')+'&rdquo; — '+(hit?hit.label:'')+' — blocked</div>');
     screen.appendChild(g); screen.scrollTop=screen.scrollHeight;
     await sleep(30); if(mine!==token) return; g.classList.add('show');
     await sleep(1150); if(mine!==token) return;
     g.querySelector('#gl').classList.add('dim');
-    g.appendChild(el('div','gate-l pass','✓ no diagnosis · prognosis · treatment — safe to show'));
+    var clean=gateScan("Reason I'm here: chest tightness on exertion; I want to know the likely cause.").length===0;
+    g.appendChild(el('div','gate-l pass',(clean?'✓':'✕')+' no diagnosis · prognosis · treatment — safe to show'));
     screen.scrollTop=screen.scrollHeight;
     await sleep(950);
   }

@@ -21,18 +21,28 @@ import argparse
 import re
 import sys
 
-# Condition shapes — common diagnostic-noun suffixes plus a keyword list.
-# Used ONLY inside verdict grammar below, so a bare condition word in the
-# patient's own history never trips the gate on its own.
+# Condition / organ / descriptor shapes — matched ONLY inside verdict grammar
+# below, so a bare condition word in the patient's own history never trips the
+# gate on its own. This is a deliberately CANONICAL set: it catches the common
+# forms a verdict takes, not every phrasing. The discipline carries the rest;
+# see INVARIANT.md ("a floor under the discipline, not a substitute").
 _CONDITION = (
     r"(?:\w+itis|\w+osis|\w+emia|\w+opathy|cancer|tumou?r|infection|angina|"
     r"migraine|fracture|clot|embolism|stroke|heart attack|disease|syndrome|"
-    r"disorder|deficiency|infarction|aneurysm|ulcer|pneumonia)"
+    r"disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|diabetes|"
+    r"asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage)"
 )
+# Organs/descriptors only ever match as the OBJECT of a verdict ("it's your
+# <organ>", "this looks <descriptor>") — never on their own.
+_ORGAN = (r"(?:heart|gallbladder|liver|kidneys?|lungs?|thyroid|appendix|"
+          r"pancreas|spleen|bowel|colon|prostate|sinuses?)")
+_DESCRIPTOR = (r"(?:cardiac|neurological|respiratory|gastrointestinal|vascular|"
+               r"hormonal|musculoskeletal|psychiatric)")
 
 # Each rule fires on the GRAMMAR of a verdict (the tool asserting a conclusion
 # about the patient), not on questions the patient asks or facts they report.
 RULES = [
+    # --- treatment / plan recommendations ---
     ("treatment recommendation",
      re.compile(r"\byou\s+(?:should|need to|ought to|must|have to)\s+"
                 r"(?:take|start|stop|switch|try|request|ask for|get|begin)\b", re.I)),
@@ -44,14 +54,31 @@ RULES = [
     ("treatment recommendation",
      re.compile(r"\bI\s+(?:recommend|suggest|advise)\b[^.?!\n]{0,40}"
                 r"\b(?:take|try|start|stop|request|ask|get)\b", re.I)),
+    # clinician-style plan: "we/I should rule out / start / order ...", "let's start ..."
+    ("treatment / plan recommendation",
+     re.compile(r"\b(?:we|i|let'?s|let us)\s+(?:should\s+|need to\s+|ought to\s+|"
+                r"'ll\s+|will\s+|can\s+)?(?:rule out|start|stop|switch|order|run|"
+                r"test for|prescribe|put (?:you|them) on|begin|trial)\b", re.I)),
+    ("diagnostic verdict",  # differential-diagnosis phrasing
+     re.compile(r"\brule\s+out\b", re.I)),
+    # --- diagnostic verdicts ---
     ("diagnostic verdict",
-     re.compile(r"\b(?:this|it|that|the\s+cause)\s+"
-                r"(?:is|'s|appears to be|looks like|sounds like|is probably|"
-                r"is likely|is most likely|could be|might be|may be)\b"
-                r"[^.?!\n]{0,40}\b" + _CONDITION + r"\b", re.I)),
+     re.compile(r"\b(?:this|it|that|the\s+cause)"
+                r"(?:\s+(?:is|are|could be|might be|may be|looks like|sounds like|"
+                r"looks|sounds|seems(?:\sto\sbe)?|appears(?:\sto\sbe)?)|'s)"
+                r"(?:\s+(?:probably|likely|most likely|definitely))?"
+                r"[^.?!\n]{0,40}\b(?:" + _CONDITION + r"|your\s+" + _ORGAN
+                + r"|" + _DESCRIPTOR + r")\b", re.I)),
     ("diagnostic verdict",
-     re.compile(r"\byou\s+(?:probably\s+|likely\s+|most likely\s+|may\s+|"
-                r"might\s+|could\s+)?have\b[^.?!\n]{0,40}\b" + _CONDITION + r"\b", re.I)),
+     re.compile(r"\byou(?:\s+(?:probably|likely|most likely|may|might|could))?\s+"
+                r"(?:have|'ve got|have got)\b[^.?!\n]{0,40}\b" + _CONDITION + r"\b", re.I)),
+    ("diagnostic verdict",
+     re.compile(r"\byou(?:'re| are)\s+(?:probably\s+|likely\s+)?having\b"
+                r"[^.?!\n]{0,30}\b" + _CONDITION + r"\b", re.I)),
+    ("diagnostic verdict",  # stated clinical opinion
+     re.compile(r"\bI\s+(?:think|believe|suspect|bet|reckon|figure)\b"
+                r"[^.?!\n]{0,25}\b(?:it'?s|this is|that'?s|you have|you'?ve got)\b", re.I)),
+    # --- prognosis / reassurance verdicts ---
     ("prognosis / reassurance verdict",
      re.compile(r"\b(?:this is|it'?s|that'?s)\s+"
                 r"(?:serious|dangerous|life-threatening|benign|harmless|"
@@ -90,6 +117,12 @@ SAMPLES_FAIL = [
     "You should start a statin and request an MRI.",
     "Don't worry — this is nothing to worry about.",
     "I suggest you ask for a biopsy.",
+    # widened coverage (F2) — natural verdict forms that used to leak:
+    "Reason: you're having a heart attack.",
+    "It's probably your heart.",
+    "This looks cardiac.",
+    "Plan: we should rule out lupus and start prednisone.",
+    "I think it's your gallbladder.",
 ]
 
 SAMPLES_PASS = [
@@ -100,6 +133,9 @@ SAMPLES_PASS = [
     "What symptoms should send me to the ER instead of waiting?",
     "I have had this tightness for about three weeks.",
     "Relevant history: high blood pressure (on lisinopril); age 54.",
+    # a patient's worry belongs on the sheet — phrased as a question, it passes (F1):
+    "Worth asking: could this be something serious, like cancer?",
+    "Worth asking: could this be my heart, or something else?",
 ]
 
 
