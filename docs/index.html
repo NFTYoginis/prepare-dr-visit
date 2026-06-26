@@ -318,7 +318,7 @@
       <div class="poles" style="margin-top:14px;grid-template-columns:1fr">
         <div class="pole good">
           <h3>Visit Ready sits in between</h3>
-          <p>It does the organizing for you, the way a doctor's mind triages — and it draws a hard line at diagnosis. Prep and translation, never a verdict.</p>
+          <p>It does the organizing for you, the way a doctor's mind works through a problem — and it draws a hard line at diagnosis. Prep and translation, never a verdict.</p>
         </div>
       </div>
     </div>
@@ -331,7 +331,7 @@
     <div class="sec-head">
       <p class="eyebrow">The part that isn't a promise</p>
       <h2>One thing it verifies. Mechanically.</h2>
-      <p>Most prep tools <em>promise</em> they won't overstep. Visit Ready commits to a single rule and enforces it with a check that blocks the sheet before you ever see it — diagnosis, prognosis, and treatment talk don't get through.</p>
+      <p>Most prep tools <em>promise</em> they won't overstep. Visit Ready commits to a single rule and enforces it with a check that blocks the sheet before you ever see it — it catches the common forms of diagnosis, prognosis, and treatment talk, and the tool's discipline carries the rest.</p>
     </div>
     <div class="gateblock">
       <div class="term" aria-hidden="true">
@@ -347,7 +347,7 @@
       <div class="copy">
         <h3>The single verifiable invariant</h3>
         <p>A Visit Sheet asserts <b>no diagnosis, no prognosis, no treatment recommendation.</b> It organizes your words and questions — it never delivers a verdict.</p>
-        <p>It's enforced by <code>check.py</code> — stdlib only, run <code>--self-test</code> to watch it catch real leaks. The discipline isn't asked for. It's checked.</p>
+        <p>It's enforced by <code>check.py</code> — stdlib only; run <code>--self-test</code>, or try the box below. It's a deliberately canonical floor — it catches the common forms a verdict takes, not every phrasing — backed by the tool's discipline. The point: the floor is <em>real and runnable</em>, not prose.</p>
       </div>
     </div>
     <div class="gatetry">
@@ -413,7 +413,7 @@
         <li><span class="x">✕</span> Tell you what condition you have, or how likely one is.</li>
         <li><span class="x">✕</span> Tell you which medication, test, or treatment to ask for.</li>
         <li><span class="x">✕</span> Interpret a test result into a diagnosis.</li>
-        <li><span class="x">✕</span> Pretend to be a second opinion, a triage engine, or a medical device.</li>
+        <li><span class="x">✕</span> Pretend to be a second opinion, a clinical assessment, or a medical device.</li>
       </ul>
     </div>
     <div class="callout">
@@ -437,7 +437,7 @@
   <div class="wrap">
     <div>
       <div class="brand" style="margin-bottom:6px"><span class="dot"></span>Visit Ready</div>
-      <div class="disclaim">Not medical advice and not a medical device. It does not diagnose, assess, or triage any medical condition. In an emergency, call your local emergency number. Built for Weekly Comp #8: The Wildcard.</div>
+      <div class="disclaim">Not medical advice and not a medical device. It does not diagnose or clinically assess any medical condition; its one safety behavior — telling you to seek care if you describe an emergency pattern — is a standard public-health prompt, not a clinical judgment. In an emergency, call your local emergency number. Built for Weekly Comp #8: The Wildcard.</div>
     </div>
     <div><a id="foot-get" href="#">GitHub</a> · MIT License</div>
   </div>
@@ -464,20 +464,28 @@
   // ---- the REAL gate, ported verbatim from check.py (node-parity verified) ----
   // The demo below and the "try it" box both call gateScan(), so the page doesn't
   // just animate a gate — it runs one, with the same rules as check.py.
-  var _COND="(?:\\w+itis|\\w+osis|\\w+emia|\\w+opathy|cancer|tumou?r|infection|angina|migraine|fracture|clot|embolism|stroke|heart attack|disease|syndrome|disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|diabetes|asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage)";
+  var _COND="(?:\\w+itis|\\w+osis|\\w+emia|\\w+opathy|cancer|tumou?r|infection|angina|migraine|fracture|clot|embolism|stroke|heart attack|heart failure|disease|syndrome|disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|diabetes|asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage|shingles|vertigo|covid|the flu|flu)";
   var _ORGAN="(?:heart|gallbladder|liver|kidneys?|lungs?|thyroid|appendix|pancreas|spleen|bowel|colon|prostate|sinuses?)";
   var _DESC="(?:cardiac|neurological|respiratory|gastrointestinal|vascular|hormonal|musculoskeletal|psychiatric)";
+  var _STATE="(?:failing|underactive|overactive|enlarged|inflamed|blocked|damaged|infected|the problem|the cause|the culprit|the issue)";
   var GATE_RULES=[
     ["treatment recommendation", new RegExp("\\byou\\s+(?:should|need to|ought to|must|have to)\\s+(?:take|start|stop|switch|try|request|ask for|get|begin)\\b","i")],
     ["treatment recommendation", new RegExp("\\b(?:ask|request|tell)\\b[^.?!\\n]{0,40}\\b(?:to\\s+(?:prescribe|order|run)|for\\s+(?:a|an|some)\\s+(?:prescription|medication|antibiotic|steroid|statin|scan|mri|ct|biopsy|x-?ray))\\b","i")],
     ["treatment recommendation", new RegExp("\\bI\\s+(?:recommend|suggest|advise)\\b[^.?!\\n]{0,40}\\b(?:take|try|start|stop|request|ask|get)\\b","i")],
-    ["treatment / plan recommendation", new RegExp("\\b(?:we|i|let'?s|let us)\\s+(?:should\\s+|need to\\s+|ought to\\s+|'ll\\s+|will\\s+|can\\s+)?(?:rule out|start|stop|switch|order|run|test for|prescribe|put (?:you|them) on|begin|trial)\\b","i")],
+    ["treatment / plan recommendation", new RegExp("\\b(?:we|let'?s|let us)(?:'ll|\\s+(?:should|need to|ought to|will|can))?\\s+(?:rule out|start|stop|switch|order|run|test for|prescribe|put (?:you|them) on|begin|trial)\\b","i")],
     ["diagnostic verdict", new RegExp("\\brule\\s+out\\b","i")],
-    ["diagnostic verdict", new RegExp("\\b(?:this|it|that|the\\s+cause)(?:\\s+(?:is|are|could be|might be|may be|looks like|sounds like|looks|sounds|seems(?:\\sto\\sbe)?|appears(?:\\sto\\sbe)?)|'s)(?:\\s+(?:probably|likely|most likely|definitely))?[^.?!\\n]{0,40}\\b(?:"+_COND+"|your\\s+"+_ORGAN+"|"+_DESC+")\\b","i")],
-    ["diagnostic verdict", new RegExp("\\byou(?:\\s+(?:probably|likely|most likely|may|might|could))?\\s+(?:have|'ve got|have got)\\b[^.?!\\n]{0,40}\\b"+_COND+"\\b","i")],
+    ["diagnostic verdict", new RegExp("\\b(?:this|it|that|the\\s+cause|(?:the|that|your)\\s+\\w+)(?:\\s+(?:is|are|could be|might be|may be|looks like|sounds like|looks|sounds|seems(?:\\sto\\sbe)?|appears(?:\\sto\\sbe)?)|'s)(?:\\s+(?:probably|likely|most likely|definitely))?[^.?!\\n]{0,40}\\b(?:"+_COND+"|your\\s+"+_ORGAN+"|"+_DESC+"|"+_STATE+")\\b","i")],
+    ["diagnostic verdict", new RegExp("\\byou(?:\\s+(?:probably|likely|most likely|may|might|could))?(?:'ve\\s+got|\\s+have(?:\\s+got)?)\\b[^.?!\\n]{0,40}\\b"+_COND+"\\b","i")],
     ["diagnostic verdict", new RegExp("\\byou(?:'re| are)\\s+(?:probably\\s+|likely\\s+)?having\\b[^.?!\\n]{0,30}\\b"+_COND+"\\b","i")],
+    ["diagnostic verdict", new RegExp("\\byou(?:'re| are|\\s+may be|\\s+might be|\\s+could be)\\s+(?:probably\\s+)?(?:developing|getting|coming down with)\\b[^.?!\\n]{0,20}\\b"+_COND+"\\b","i")],
     ["diagnostic verdict", new RegExp("\\bI\\s+(?:think|believe|suspect|bet|reckon|figure)\\b[^.?!\\n]{0,25}\\b(?:it'?s|this is|that'?s|you have|you'?ve got)\\b","i")],
-    ["prognosis / reassurance verdict", new RegExp("\\b(?:this is|it'?s|that'?s)\\s+(?:serious|dangerous|life-threatening|benign|harmless|nothing to worry about|not serious|probably fine)\\b","i")]
+    ["diagnostic verdict", new RegExp("\\bmy\\s+(?:guess|bet|hunch|money)\\s+(?:is|would be|'?s on)\\b","i")],
+    ["diagnostic verdict", new RegExp("\\b(?:points?\\s+to|suggests?|indicates?|consistent with|caused by|due to|screams?|(?:likely\\s+)?culprit is)\\b[^.?!\\n]{0,30}\\b(?:"+_COND+"|your\\s+"+_ORGAN+"|"+_ORGAN+"|"+_DESC+")\\b","i")],
+    ["diagnostic verdict", new RegExp("\\b(?:sounds|looks)\\s+like\\b[^.?!\\n]{0,20}\\b(?:"+_COND+"|"+_DESC+")\\b","i")],
+    ["prognosis / reassurance verdict", new RegExp("\\b(?:this is|it'?s|that'?s)\\s+(?:serious|dangerous|life-threatening|benign|harmless|nothing to worry about|nothing serious|just stress|not serious|probably fine|nothing)\\b","i")],
+    ["prognosis verdict", new RegExp("\\byou(?:'ll|'d| will|'re going to| are going to)[^.?!\\n]{0,30}\\b(?:need|require|have to|develop|lose|worsen|recover|die|end up|be left)\\b","i")],
+    ["prognosis verdict", new RegExp("\\byou\\s+(?:won'?t|will not)\\s+(?:recover|make it|get better|improve|be the same)\\b","i")],
+    ["prognosis verdict", new RegExp("\\b(?:this|it|that|(?:the|that|your)\\s+\\w+)\\s+(?:will|'ll|is going to|may|might|could)\\s+(?:get worse|worsen|spread|progress|deteriorate|improve|kill|need|require)\\b","i")]
   ];
   function gateScan(text){
     var out=[];
@@ -565,7 +573,7 @@
       if(st.t==='user') screen.appendChild(el('div','bubble user show',st.text));
       else if(st.t==='bot') screen.appendChild(el('div','bubble bot show','<div class="who">Visit Ready</div>'+st.text));
       else if(st.t==='stop') screen.appendChild(el('div','stopcard show','<div class="who">⚠ Visit Ready · safety stop</div>'+st.text));
-      else if(st.t==='gate') screen.appendChild(el('div','gate show','<div class="gate-h">gate check · check.py</div><div class="gate-l fail dim">✕ "this is probably angina" — diagnostic verdict — blocked</div><div class="gate-l pass">✓ no diagnosis · prognosis · treatment — safe to show</div>'));
+      else if(st.t==='gate'){ var _h=gateScan("Reason I'm here: this is probably angina.")[0]; screen.appendChild(el('div','gate show','<div class="gate-h">gate check · running check.py rules</div><div class="gate-l fail dim">✕ &ldquo;'+(_h?_h.snippet:'')+'&rdquo; — '+(_h?_h.label:'')+' — blocked</div><div class="gate-l pass">✓ no diagnosis · prognosis · treatment — safe to show</div>')); }
       else if(st.t==='sheet') screen.appendChild(el('div','sheet show',sheetMarkup()));
     });
   }

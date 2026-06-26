@@ -28,16 +28,19 @@ import sys
 # see INVARIANT.md ("a floor under the discipline, not a substitute").
 _CONDITION = (
     r"(?:\w+itis|\w+osis|\w+emia|\w+opathy|cancer|tumou?r|infection|angina|"
-    r"migraine|fracture|clot|embolism|stroke|heart attack|disease|syndrome|"
-    r"disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|diabetes|"
-    r"asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage)"
+    r"migraine|fracture|clot|embolism|stroke|heart attack|heart failure|disease|"
+    r"syndrome|disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|"
+    r"diabetes|asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage|"
+    r"shingles|vertigo|covid|the flu|flu)"
 )
-# Organs/descriptors only ever match as the OBJECT of a verdict ("it's your
-# <organ>", "this looks <descriptor>") — never on their own.
+# Organs/descriptors/states only ever match as the OBJECT of a verdict ("it's your
+# <organ>", "this looks <descriptor>", "your thyroid is <state>") — never alone.
 _ORGAN = (r"(?:heart|gallbladder|liver|kidneys?|lungs?|thyroid|appendix|"
           r"pancreas|spleen|bowel|colon|prostate|sinuses?)")
 _DESCRIPTOR = (r"(?:cardiac|neurological|respiratory|gastrointestinal|vascular|"
                r"hormonal|musculoskeletal|psychiatric)")
+_STATE = (r"(?:failing|underactive|overactive|enlarged|inflamed|blocked|damaged|"
+          r"infected|the problem|the cause|the culprit|the issue)")
 
 # Each rule fires on the GRAMMAR of a verdict (the tool asserting a conclusion
 # about the patient), not on questions the patient asks or facts they report.
@@ -54,35 +57,66 @@ RULES = [
     ("treatment recommendation",
      re.compile(r"\bI\s+(?:recommend|suggest|advise)\b[^.?!\n]{0,40}"
                 r"\b(?:take|try|start|stop|request|ask|get)\b", re.I)),
-    # clinician-style plan: "we/I should rule out / start / order ...", "let's start ..."
+    # clinician-style plan: "we should rule out / start ...", "we'll order ...", "let's start ..."
     ("treatment / plan recommendation",
-     re.compile(r"\b(?:we|i|let'?s|let us)\s+(?:should\s+|need to\s+|ought to\s+|"
-                r"'ll\s+|will\s+|can\s+)?(?:rule out|start|stop|switch|order|run|"
-                r"test for|prescribe|put (?:you|them) on|begin|trial)\b", re.I)),
+     re.compile(r"\b(?:we|let'?s|let us)(?:'ll|\s+(?:should|need to|ought to|will|can))?\s+"
+                r"(?:rule out|start|stop|switch|order|run|test for|prescribe|"
+                r"put (?:you|them) on|begin|trial)\b", re.I)),
     ("diagnostic verdict",  # differential-diagnosis phrasing
      re.compile(r"\brule\s+out\b", re.I)),
     # --- diagnostic verdicts ---
+    # copular assertion — broadened subject ("the lump is cancer", "your thyroid is underactive")
     ("diagnostic verdict",
-     re.compile(r"\b(?:this|it|that|the\s+cause)"
+     re.compile(r"\b(?:this|it|that|the\s+cause|(?:the|that|your)\s+\w+)"
                 r"(?:\s+(?:is|are|could be|might be|may be|looks like|sounds like|"
                 r"looks|sounds|seems(?:\sto\sbe)?|appears(?:\sto\sbe)?)|'s)"
                 r"(?:\s+(?:probably|likely|most likely|definitely))?"
                 r"[^.?!\n]{0,40}\b(?:" + _CONDITION + r"|your\s+" + _ORGAN
-                + r"|" + _DESCRIPTOR + r")\b", re.I)),
+                + r"|" + _DESCRIPTOR + r"|" + _STATE + r")\b", re.I)),
+    # "you have / you've got <condition>" (contraction-safe)
     ("diagnostic verdict",
-     re.compile(r"\byou(?:\s+(?:probably|likely|most likely|may|might|could))?\s+"
-                r"(?:have|'ve got|have got)\b[^.?!\n]{0,40}\b" + _CONDITION + r"\b", re.I)),
+     re.compile(r"\byou(?:\s+(?:probably|likely|most likely|may|might|could))?"
+                r"(?:'ve\s+got|\s+have(?:\s+got)?)\b[^.?!\n]{0,40}\b" + _CONDITION + r"\b", re.I)),
     ("diagnostic verdict",
      re.compile(r"\byou(?:'re| are)\s+(?:probably\s+|likely\s+)?having\b"
                 r"[^.?!\n]{0,30}\b" + _CONDITION + r"\b", re.I)),
-    ("diagnostic verdict",  # stated clinical opinion
+    # "you're / you may be developing <condition>"
+    ("diagnostic verdict",
+     re.compile(r"\byou(?:'re| are|\s+may be|\s+might be|\s+could be)\s+(?:probably\s+)?"
+                r"(?:developing|getting|coming down with)\b[^.?!\n]{0,20}\b" + _CONDITION + r"\b", re.I)),
+    # stated clinical opinion: "I think it's ...", "my guess is ..."
+    ("diagnostic verdict",
      re.compile(r"\bI\s+(?:think|believe|suspect|bet|reckon|figure)\b"
                 r"[^.?!\n]{0,25}\b(?:it'?s|this is|that'?s|you have|you'?ve got)\b", re.I)),
-    # --- prognosis / reassurance verdicts ---
+    ("diagnostic verdict",
+     re.compile(r"\bmy\s+(?:guess|bet|hunch|money)\s+(?:is|would be|'?s on)\b", re.I)),
+    # inferential: "points to / suggests / consistent with / caused by ... <condition>"
+    ("diagnostic verdict",
+     re.compile(r"\b(?:points?\s+to|suggests?|indicates?|consistent with|caused by|"
+                r"due to|screams?|(?:likely\s+)?culprit is)\b[^.?!\n]{0,30}\b(?:"
+                + _CONDITION + r"|your\s+" + _ORGAN + r"|" + _ORGAN + r"|" + _DESCRIPTOR + r")\b", re.I)),
+    # bare hedged opinion: "sounds like / looks like <condition>"
+    ("diagnostic verdict",
+     re.compile(r"\b(?:sounds|looks)\s+like\b[^.?!\n]{0,20}\b(?:"
+                + _CONDITION + r"|" + _DESCRIPTOR + r")\b", re.I)),
+    # --- prognosis verdicts (present + future) ---
     ("prognosis / reassurance verdict",
      re.compile(r"\b(?:this is|it'?s|that'?s)\s+"
                 r"(?:serious|dangerous|life-threatening|benign|harmless|"
-                r"nothing to worry about|not serious|probably fine)\b", re.I)),
+                r"nothing to worry about|nothing serious|just stress|not serious|"
+                r"probably fine|nothing)\b", re.I)),
+    ("prognosis verdict",  # future-tense outcome
+     re.compile(r"\byou(?:'ll|'d| will|'re going to| are going to)"
+                r"[^.?!\n]{0,30}\b(?:need|require|have to|develop|lose|worsen|"
+                r"recover|die|end up|be left)\b", re.I)),
+    ("prognosis verdict",
+     re.compile(r"\byou\s+(?:won'?t|will not)\s+"
+                r"(?:recover|make it|get better|improve|be the same)\b", re.I)),
+    ("prognosis verdict",
+     re.compile(r"\b(?:this|it|that|(?:the|that|your)\s+\w+)\s+"
+                r"(?:will|'ll|is going to|may|might|could)\s+"
+                r"(?:get worse|worsen|spread|progress|deteriorate|improve|"
+                r"kill|need|require)\b", re.I)),
 ]
 
 
@@ -123,6 +157,23 @@ SAMPLES_FAIL = [
     "This looks cardiac.",
     "Plan: we should rule out lupus and start prednisone.",
     "I think it's your gallbladder.",
+    # 2nd independent re-gate — verdict families + dead-branch fixes:
+    "Reason: your thyroid is underactive.",
+    "Reason: your heart is the problem.",
+    "Reason: that rash is shingles.",
+    "Reason: the lump is cancer.",
+    "Reason: your labs suggest diabetes.",
+    "Reason: symptoms point to pneumonia.",
+    "Reason: your symptoms scream appendicitis.",
+    "Impression: sounds like vertigo.",
+    "My guess is shingles.",
+    "Reason: you may be developing COPD.",
+    "Worth mentioning: you've got pneumonia.",
+    "Plan: we'll order an MRI and start prednisone.",
+    "Prognosis: you'll need surgery.",
+    "Prognosis: this will get worse over the next few months.",
+    "Prognosis: you won't recover fully.",
+    "It's nothing — just stress.",
 ]
 
 SAMPLES_PASS = [
@@ -136,6 +187,11 @@ SAMPLES_PASS = [
     # a patient's worry belongs on the sheet — phrased as a question, it passes (F1):
     "Worth asking: could this be something serious, like cancer?",
     "Worth asking: could this be my heart, or something else?",
+    # legitimate patient content / questions must still pass (FP guards):
+    "I want to ask whether I should start any new medication.",
+    "Worth asking: will this get worse, or settle on its own?",
+    "Relevant history: I had pneumonia last year.",
+    "My heart rate has been a bit higher than usual lately.",
 ]
 
 
