@@ -464,7 +464,7 @@
   // ---- the REAL gate, ported verbatim from check.py (node-parity verified) ----
   // The demo below and the "try it" box both call gateScan(), so the page doesn't
   // just animate a gate — it runs one, with the same rules as check.py.
-  var _COND="(?:\\w+itis|\\w+osis|\\w+emia|\\w+opathy|cancer|tumou?r|infection|angina|migraine|fracture|clot|embolism|stroke|heart attack|heart failure|disease|syndrome|disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|diabetes|asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage|shingles|vertigo|covid|the flu|flu)";
+  var _COND="(?:\\w+itis|\\w+osis|\\w+emia|\\w+opathy|\\w+oma|cancer|tumou?r|infection|angina|migraine|fracture|clot|embolism|stroke|heart attack|heart failure|disease|syndrome|disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|diabetes|asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage|shingles|vertigo|covid|the flu|flu)";
   var _ORGAN="(?:heart|gallbladder|liver|kidneys?|lungs?|thyroid|appendix|pancreas|spleen|bowel|colon|prostate|sinuses?)";
   var _DESC="(?:cardiac|neurological|respiratory|gastrointestinal|vascular|hormonal|musculoskeletal|psychiatric)";
   var _STATE="(?:failing|underactive|overactive|enlarged|inflamed|blocked|damaged|infected|the problem|the cause|the culprit|the issue)";
@@ -474,18 +474,19 @@
     ["treatment recommendation", new RegExp("\\bI\\s+(?:recommend|suggest|advise)\\b[^.?!\\n]{0,40}\\b(?:take|try|start|stop|request|ask|get)\\b","i")],
     ["treatment / plan recommendation", new RegExp("\\b(?:we|let'?s|let us)(?:'ll|\\s+(?:should|need to|ought to|will|can))?\\s+(?:rule out|start|stop|switch|order|run|test for|prescribe|put (?:you|them) on|begin|trial)\\b","i")],
     ["diagnostic verdict", new RegExp("\\brule\\s+out\\b","i")],
-    ["diagnostic verdict", new RegExp("\\b(?:this|it|that|the\\s+cause|(?:the|that|your)\\s+\\w+)(?:\\s+(?:is|are|could be|might be|may be|looks like|sounds like|looks|sounds|seems(?:\\sto\\sbe)?|appears(?:\\sto\\sbe)?)|'s)(?:\\s+(?:probably|likely|most likely|definitely))?[^.?!\\n]{0,40}\\b(?:"+_COND+"|your\\s+"+_ORGAN+"|"+_DESC+"|"+_STATE+")\\b","i")],
+    ["diagnostic verdict", new RegExp("\\b(?:it|(?:this|that|the|your)(?:\\s+\\w+){0,3})(?:\\s+(?:is|are|could be|might be|may be|looks like|sounds like|looks|sounds|seems(?:\\sto\\sbe)?|appears(?:\\sto\\sbe)?)|'s)(?:\\s+(?:probably|likely|most likely|definitely))?[^.?!\\n]{0,40}\\b(?:"+_COND+"|your\\s+"+_ORGAN+"|"+_DESC+"|"+_STATE+")\\b","i")],
     ["diagnostic verdict", new RegExp("\\byou(?:\\s+(?:probably|likely|most likely|may|might|could))?(?:'ve\\s+got|\\s+have(?:\\s+got)?)\\b[^.?!\\n]{0,40}\\b"+_COND+"\\b","i")],
     ["diagnostic verdict", new RegExp("\\byou(?:'re| are)\\s+(?:probably\\s+|likely\\s+)?having\\b[^.?!\\n]{0,30}\\b"+_COND+"\\b","i")],
     ["diagnostic verdict", new RegExp("\\byou(?:'re| are|\\s+may be|\\s+might be|\\s+could be)\\s+(?:probably\\s+)?(?:developing|getting|coming down with)\\b[^.?!\\n]{0,20}\\b"+_COND+"\\b","i")],
     ["diagnostic verdict", new RegExp("\\bI\\s+(?:think|believe|suspect|bet|reckon|figure)\\b[^.?!\\n]{0,25}\\b(?:it'?s|this is|that'?s|you have|you'?ve got)\\b","i")],
     ["diagnostic verdict", new RegExp("\\bmy\\s+(?:guess|bet|hunch|money)\\s+(?:is|would be|'?s on)\\b","i")],
+    ["diagnostic verdict", new RegExp("\\bI'?d\\s+(?:bet|guess|say|wager|put money on)\\b","i")],
     ["diagnostic verdict", new RegExp("\\b(?:points?\\s+to|suggests?|indicates?|consistent with|caused by|due to|screams?|(?:likely\\s+)?culprit is)\\b[^.?!\\n]{0,30}\\b(?:"+_COND+"|your\\s+"+_ORGAN+"|"+_ORGAN+"|"+_DESC+")\\b","i")],
     ["diagnostic verdict", new RegExp("\\b(?:sounds|looks)\\s+like\\b[^.?!\\n]{0,20}\\b(?:"+_COND+"|"+_DESC+")\\b","i")],
     ["prognosis / reassurance verdict", new RegExp("\\b(?:this is|it'?s|that'?s)\\s+(?:serious|dangerous|life-threatening|benign|harmless|nothing to worry about|nothing serious|just stress|not serious|probably fine|nothing)\\b","i")],
     ["prognosis verdict", new RegExp("\\byou(?:'ll|'d| will|'re going to| are going to)[^.?!\\n]{0,30}\\b(?:need|require|have to|develop|lose|worsen|recover|die|end up|be left)\\b","i")],
     ["prognosis verdict", new RegExp("\\byou\\s+(?:won'?t|will not)\\s+(?:recover|make it|get better|improve|be the same)\\b","i")],
-    ["prognosis verdict", new RegExp("\\b(?:this|it|that|(?:the|that|your)\\s+\\w+)\\s+(?:will|'ll|is going to|may|might|could)\\s+(?:get worse|worsen|spread|progress|deteriorate|improve|kill|need|require)\\b","i")]
+    ["prognosis verdict", new RegExp("\\b(?:it|(?:this|that|the|your)(?:\\s+\\w+){0,3})\\s+(?:will|'ll|is going to|may|might|could)\\s+(?:get worse|worsen|spread|progress|deteriorate|improve|kill|need|require)\\b","i")]
   ];
   function gateScan(text){
     var out=[];

@@ -27,7 +27,7 @@ import sys
 # forms a verdict takes, not every phrasing. The discipline carries the rest;
 # see INVARIANT.md ("a floor under the discipline, not a substitute").
 _CONDITION = (
-    r"(?:\w+itis|\w+osis|\w+emia|\w+opathy|cancer|tumou?r|infection|angina|"
+    r"(?:\w+itis|\w+osis|\w+emia|\w+opathy|\w+oma|cancer|tumou?r|infection|angina|"
     r"migraine|fracture|clot|embolism|stroke|heart attack|heart failure|disease|"
     r"syndrome|disorder|deficiency|infarction|aneurysm|ulcer|pneumonia|lupus|"
     r"diabetes|asthma|copd|gout|sepsis|gallstones?|kidney stones?|blockage|"
@@ -67,7 +67,7 @@ RULES = [
     # --- diagnostic verdicts ---
     # copular assertion — broadened subject ("the lump is cancer", "your thyroid is underactive")
     ("diagnostic verdict",
-     re.compile(r"\b(?:this|it|that|the\s+cause|(?:the|that|your)\s+\w+)"
+     re.compile(r"\b(?:it|(?:this|that|the|your)(?:\s+\w+){0,3})"
                 r"(?:\s+(?:is|are|could be|might be|may be|looks like|sounds like|"
                 r"looks|sounds|seems(?:\sto\sbe)?|appears(?:\sto\sbe)?)|'s)"
                 r"(?:\s+(?:probably|likely|most likely|definitely))?"
@@ -90,6 +90,8 @@ RULES = [
                 r"[^.?!\n]{0,25}\b(?:it'?s|this is|that'?s|you have|you'?ve got)\b", re.I)),
     ("diagnostic verdict",
      re.compile(r"\bmy\s+(?:guess|bet|hunch|money)\s+(?:is|would be|'?s on)\b", re.I)),
+    ("diagnostic verdict",
+     re.compile(r"\bI'?d\s+(?:bet|guess|say|wager|put money on)\b", re.I)),
     # inferential: "points to / suggests / consistent with / caused by ... <condition>"
     ("diagnostic verdict",
      re.compile(r"\b(?:points?\s+to|suggests?|indicates?|consistent with|caused by|"
@@ -113,7 +115,7 @@ RULES = [
      re.compile(r"\byou\s+(?:won'?t|will not)\s+"
                 r"(?:recover|make it|get better|improve|be the same)\b", re.I)),
     ("prognosis verdict",
-     re.compile(r"\b(?:this|it|that|(?:the|that|your)\s+\w+)\s+"
+     re.compile(r"\b(?:it|(?:this|that|the|your)(?:\s+\w+){0,3})\s+"
                 r"(?:will|'ll|is going to|may|might|could)\s+"
                 r"(?:get worse|worsen|spread|progress|deteriorate|improve|"
                 r"kill|need|require)\b", re.I)),
@@ -174,6 +176,13 @@ SAMPLES_FAIL = [
     "Prognosis: this will get worse over the next few months.",
     "Prognosis: you won't recover fully.",
     "It's nothing — just stress.",
+    # 3rd re-gate follow-up — multi-word subjects, vocab, imperative treatment:
+    "Reason: that breast lump is cancer.",
+    "Reason: your thyroid gland is underactive.",
+    "Reason: the chest pain is cardiac.",
+    "Prognosis: this disease will progress.",
+    "Reason: that mole is melanoma.",
+    "I'd put money on it being shingles.",
 ]
 
 SAMPLES_PASS = [
@@ -192,6 +201,14 @@ SAMPLES_PASS = [
     "Worth asking: will this get worse, or settle on its own?",
     "Relevant history: I had pneumonia last year.",
     "My heart rate has been a bit higher than usual lately.",
+    # broadened-subject FP guards — factual sheet lines must still pass:
+    "The test is scheduled for next Tuesday.",
+    "Your appointment is at 2pm on Thursday.",
+    "The chest pain is worse on stairs, better at rest.",
+    "My back is sore after sitting too long.",
+    # imperative-phrase FP guards (re-gate #3): a patient's own neutral "switch to" must pass:
+    "Question: can I switch to a generic statin?",
+    "What I've tried: I switched to a different pharmacy last month.",
 ]
 
 
